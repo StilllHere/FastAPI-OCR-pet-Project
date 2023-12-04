@@ -1,0 +1,71 @@
+version: '3'
+services:
+  db:
+    image: postgres
+    container_name: db_app
+    env_file:
+      - .env
+    ports:
+      - '1111:5432'
+    environment:
+     - POSTGRES_DB=${DB_NAME}
+     - POSTGRES_USER=${DB_USER}
+     - POSTGRES_PASSWORD=${DB_PASS}
+    expose:
+      - 5432
+
+
+
+  rabbit:
+    image: rabbitmq:3.9-alpine
+    container_name: rabbitmq_app
+    env_file:
+      - .env
+    healthcheck:
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 30s
+      timeout: 30s
+      retries: 10
+    ports:
+      - "5672:5672"
+    expose:
+      - 5672
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fast_api
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    command:
+      - '/fast_app/app.sh'
+
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbit:5672/
+    links:
+      - rabbit
+    volumes:
+      - /home/still/Pictures/arts:/documents
+    depends_on:
+      - rabbit
+      - db
+
+  celery:
+    build:
+      context: .
+      dockerfile: DockerfileCelery
+    working_dir: /fast_api
+    container_name: celery_app
+    env_file:
+      - .env
+    ports:
+      - '1001:8000'
+    volumes:
+      - /home/still/Pictures/arts:/documents
+    command: celery -A tasks worker --loglevel=INFO
+    depends_on:
+      rabbit:
+        condition: service_healthy
