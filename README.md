@@ -27,5 +27,5 @@ The FastAPI OCR Project is designed to provide a seamless and efficient way to p
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/your-username/hw_4nov.git
-   cd hw_4nov
+   git clone https://github.com/your-username/fastapi-ocr-project.git
+   cd fastapi-ocr-project
